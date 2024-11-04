@@ -1,0 +1,101 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "foo_service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "FooService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/example/foo": {
+      "post": {
+        "summary": "This comment should be excluded from OpenAPI output",
+        "operationId": "FooService_Foo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/foo_serviceFooReply"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/foo_serviceFooRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FooService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "foo_serviceFooReply": {
+      "type": "object",
+      "title": "This comment should be excluded from OpenAPI output"
+    },
+    "foo_serviceFooRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "description": "This annotation should be preserved",
+          "title": "This comment should be excluded from OpenAPI output"
+        },
+        "password": {
+          "type": "string",
+          "title": "This annotation should be preserved"
+        }
+      },
+      "title": "This comment should be excluded from OpenAPI output"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}
