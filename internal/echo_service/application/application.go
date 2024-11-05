@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_runtime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -75,12 +76,6 @@ func (a *Application) startGrpcServer(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error listening on port '%s': %w", a.cfg.GrpcPort, err)
 	}
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
-		<-ctx.Done()
-		lis.Close()
-	}()
 
 	s := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
@@ -90,6 +85,14 @@ func (a *Application) startGrpcServer(ctx context.Context) error {
 			grpc_recovery.StreamServerInterceptor(),
 		),
 	)
+
+	a.wg.Add(1)
+	go func() {
+		defer a.wg.Done()
+		<-ctx.Done()
+		s.GracefulStop()
+		lis.Close()
+	}()
 
 	echo_service.RegisterEchoServiceServer(s, a.srv)
 
@@ -110,12 +113,6 @@ func (a *Application) startHttpServer(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error conn to gRPC server: %w", err)
 	}
-	a.wg.Add(1)
-	go func() {
-		defer a.wg.Done()
-		<-ctx.Done()
-		conn.Close()
-	}()
 
 	mux := grpc_runtime.NewServeMux()
 	err = echo_service.RegisterEchoServiceHandler(ctx, mux, conn)
@@ -131,7 +128,11 @@ func (a *Application) startHttpServer(ctx context.Context) error {
 	go func() {
 		defer a.wg.Done()
 		<-ctx.Done()
-		server.Close()
+
+		sCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		server.Shutdown(sCtx)
+		conn.Close()
 	}()
 
 	a.wg.Add(1)
